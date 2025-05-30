@@ -20,6 +20,9 @@ import torch
 import pandas as pd
 import numpy as np
 from datasets import load_dataset
+from peft import LoraConfig, get_peft_model
+from torch.utils.data import Dataset
+from sklearn.metrics import accuracy_score, f1_score, classification_report, multilabel_confusion_matrix
 from transformers import (
     AutoTokenizer,
     AutoModel,
@@ -29,9 +32,6 @@ from transformers import (
     EarlyStoppingCallback,
     AutoModelForSequenceClassification
 )
-from peft import LoraConfig, get_peft_model
-from torch.utils.data import Dataset
-from sklearn.metrics import accuracy_score, f1_score, classification_report, multilabel_confusion_matrix
 import matplotlib.pyplot as plt
 # import seaborn as sns
 from typing import Dict, List, Tuple
@@ -321,10 +321,10 @@ def main():
 
     # Configuration
     MODEL_NAME = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
-    MAX_LENGTH = 256
+    MAX_LENGTH = 128
     BATCH_SIZE = 4
     LEARNING_RATE = 2e-5
-    NUM_EPOCHS = 50
+    NUM_EPOCHS = 20
 
     print("=== BRIGHTER Multilabel Emotion Classification Fine-tuning ===\n")
 
@@ -352,10 +352,10 @@ def main():
 
     # LoRA configurations
     lora_config = LoraConfig(
-        r=64,
-        lora_alpha=128,
+        r=8,
+        lora_alpha=16,
         target_modules=["query", "value"], # Changes depending on the model
-        lora_dropout=0.05,
+        lora_dropout=0.1,
         bias="none",
         task_type="SEQ_CLS"
     )
@@ -369,20 +369,21 @@ def main():
         num_train_epochs=NUM_EPOCHS,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
-        warmup_steps=500,
+        warmup_steps=100,
         weight_decay=0.01,
         logging_dir='./logs',
-        logging_steps=100,
+        logging_steps=50,
         eval_strategy="steps",
-        eval_steps=1000,
+        eval_steps=500,
         save_strategy="steps",
-        save_steps=1000,
+        save_steps=500,
         load_best_model_at_end=True,
         metric_for_best_model="eval_f1_macro",
         greater_is_better=True,
         learning_rate=LEARNING_RATE,
         fp16=torch.cuda.is_available(),
-        dataloader_num_workers=4,
+        dataloader_num_workers=2,
+        dataloader_pin_memory=True,
         remove_unused_columns=False,
         report_to="none",
     )
