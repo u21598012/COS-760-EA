@@ -13,8 +13,6 @@ current_directory = os.getcwd()
 print("Current working directory:", current_directory)
 
 import sys
-print("Jupyter's Python Executable:", sys.executable)
-print("Jupyter's sys.path:", sys.path)
 
 import torch
 import pandas as pd
@@ -399,6 +397,8 @@ def main():
     )
 
     # Train the model
+    print("CUDA available:", torch.cuda.is_available())
+    print("Using device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
     print("\nStarting training...")
     trainer.train()
 
