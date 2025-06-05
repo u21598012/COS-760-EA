@@ -262,9 +262,9 @@ def evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer):
     # Calculate comprehensive metrics
     exact_match = accuracy_score(all_labels, all_predictions)
     hamming_score = (all_predictions == all_labels).mean()
-    f1_micro = f1_score(all_labels, all_predictions, average='micro')
-    f1_macro = f1_score(all_labels, all_predictions, average='macro')
-    f1_weighted = f1_score(all_labels, all_predictions, average='weighted')
+    f1_micro = f1_score(all_labels, all_predictions, average='micro',zero_division=0)
+    f1_macro = f1_score(all_labels, all_predictions, average='macro',zero_division=0)
+    f1_weighted = f1_score(all_labels, all_predictions, average='weighted',zero_division=0)
 
     print(f"\n=== Final Test Results ===")
     print(f"Exact Match Accuracy: {exact_match:.4f}")
@@ -276,7 +276,7 @@ def evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer):
     # Per-emotion metrics
     print(f"\n=== Per-Emotion Results ===")
     for i, emotion in enumerate(emotion_columns):
-        emotion_f1 = f1_score(all_labels[:, i], all_predictions[:, i])
+        emotion_f1 = f1_score(all_labels[:, i], all_predictions[:, i], zero_division=0)
         emotion_acc = accuracy_score(all_labels[:, i], all_predictions[:, i])
         print(f"{emotion:>8}: F1={emotion_f1:.3f}, Acc={emotion_acc:.3f}")
 
@@ -284,8 +284,11 @@ def evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer):
     print(f"\n=== Detailed Classification Report ===")
     for i, emotion in enumerate(emotion_columns):
         print(f"\n{emotion.upper()}:")
+
+        # Explicitly specify labels=[0, 1] to handle cases with only one class present
+        # Also add zero_division handling to classification_report
         print(classification_report(all_labels[:, i], all_predictions[:, i],
-                                  target_names=['Not Present', 'Present'], digits=3))
+                                  target_names=['Not Present', 'Present'], digits=3, labels=[0, 1], zero_division=0))
 
     return all_predictions, all_labels, all_probabilities
 
