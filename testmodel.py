@@ -15,11 +15,10 @@ print("Current working directory:", current_directory)
 import sys
 
 import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
 from datasets import load_dataset
-from peft import LoraConfig, get_peft_model
-from torch.utils.data import Dataset
+from peft import LoraConfig, PeftConfig, PeftModel, get_peft_model
 from sklearn.metrics import accuracy_score, f1_score, classification_report, multilabel_confusion_matrix
 from transformers import (
     AutoTokenizer,
@@ -31,58 +30,36 @@ from transformers import (
     AutoModelForSequenceClassification
 )
 import matplotlib.pyplot as plt
+from ZeroShotClassification import ZeroShotPredictor
 # import seaborn as sns
-from typing import Dict, List, Tuple
-from MultiLabelClassifier import MultiLabelEmotionModel
 import warnings
 warnings.filterwarnings('ignore')
 
-class BrighterMultiLabelDataset(Dataset):
-    """Custom dataset for BRIGHTER multilabel emotion data"""
+# External files
+from BrighterClass import BrighterMultiLabelDataset
+from MultiLabelClassifier import MultiLabelEmotionModel
 
-    def __init__(self, texts: List[str], labels: np.ndarray, tokenizer, max_length: int = 512):
-        self.texts = texts
-        self.labels = labels
-        self.tokenizer = tokenizer
-        self.max_length = max_length
+# constants
+english_pretrained_model_path = './models/zero_shot'
+emotion_columns = ['anger', 'disgust', 'fear', 'joy', 'sadness', 'surprise']
+MODEL_NAME = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
+MAX_LENGTH = 128
 
-    def __len__(self):
-        return len(self.texts)
-
-    def __getitem__(self, idx):
-        text = str(self.texts[idx])
-        labels = self.labels[idx]
-
-        encoding = self.tokenizer(
-            text,
-            truncation=True,
-            padding='max_length',
-            max_length=self.max_length,
-            return_tensors='pt'
-        )
-
-        return {
-            'input_ids': encoding['input_ids'].flatten(),
-            'attention_mask': encoding['attention_mask'].flatten(),
-            'labels': torch.tensor(labels, dtype=torch.float)
-        }
-
-def load_and_preprocess_data():
+def load_and_preprocess_data(lang):
     """Load and preprocess the BRIGHTER dataset for multilabel classification"""
     print("Loading BRIGHTER dataset...")
 
     # Load the dataset
-    dataset = load_dataset("brighter-dataset/BRIGHTER-emotion-categories", "eng")
+    dataset = load_dataset("brighter-dataset/BRIGHTER-emotion-categories", lang)
 
     train_df = pd.DataFrame(dataset['train'])
     test_df = pd.DataFrame(dataset['test'])
 
     print(f"Train samples: {len(train_df)}")
     print(f"Test samples: {len(test_df)}")
-
-    emotion_columns = ['anger', 'disgust', 'fear', 'joy', 'sadness', 'surprise']
-
     print(f"Emotion columns: {emotion_columns}")
+
+    emotion_columns_final = emotion_columns
 
     # Check if all emotion columns exist
     missing_cols = [col for col in emotion_columns if col not in train_df.columns]
@@ -91,23 +68,23 @@ def load_and_preprocess_data():
         print(f"Available columns: {list(train_df.columns)}")
         emotion_cols = [col for col in train_df.columns if any(emotion in col.lower() for emotion in ['anger', 'disgust', 'fear', 'joy', 'sad', 'surprise', 'happy'])]
         print(f"Potential emotion columns: {emotion_cols}")
-        emotion_columns = emotion_cols[:6]  # Take first 6 emotion columns
+        emotion_columns_final = emotion_cols[:6]  # Take first 6 emotion columns
 
     # Fill None values in emotion columns with 0
     # This handles cases where an emotion might not be present and represented as `null`
-    train_df[emotion_columns] = train_df[emotion_columns].fillna(0)
-    test_df[emotion_columns] = test_df[emotion_columns].fillna(0)
+    train_df[emotion_columns_final ] = train_df[emotion_columns_final ].fillna(0)
+    test_df[emotion_columns_final ] = test_df[emotion_columns_final ].fillna(0)
 
     # Explore emotion distribution
     print("\nEmotion distribution in training set:")
-    for emotion in emotion_columns:
+    for emotion in emotion_columns_final :
         if emotion in train_df.columns:
             count = train_df[emotion].sum()
             percentage = (count / len(train_df)) * 100
             print(f"{emotion}: {count} ({percentage:.1f}%)")
 
-    train_labels = train_df[emotion_columns].values
-    test_labels = test_df[emotion_columns].values
+    train_labels = train_df[emotion_columns_final ].values
+    test_labels = test_df[emotion_columns_final ].values
 
     # Calculate statistics
     labels_per_sample = train_labels.sum(axis=1)
@@ -319,18 +296,14 @@ def plot_emotion_distribution(train_df, test_df, emotion_columns):
 
 def main():
     """Main training pipeline for multilabel emotion classification"""
-
-    # Configuration
-    MODEL_NAME = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
-    MAX_LENGTH = 128
     BATCH_SIZE = 4
     LEARNING_RATE = 2e-5
-    NUM_EPOCHS = 20
+    NUM_EPOCHS = 20 
 
     print("=== BRIGHTER Multilabel Emotion Classification Fine-tuning ===\n")
 
-    # Load and preprocess data
-    train_df, test_df, emotion_columns = load_and_preprocess_data()
+    # Load and preprocess english data
+    train_df, test_df, emotion_columns = load_and_preprocess_data("eng")
     num_labels = len(emotion_columns)
 
     print(f"\nEmotion labels: {emotion_columns}")
@@ -339,91 +312,99 @@ def main():
     # Plot emotion distribution
     plot_emotion_distribution(train_df, test_df, emotion_columns)
 
-    # Initialize tokenizer
-    print(f"\nLoading tokenizer: {MODEL_NAME}")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    if os.path.exists(english_pretrained_model_path):
+        print(f"\nLoading fine-tuned model from: {english_pretrained_model_path}")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        base_model = MultiLabelEmotionModel(MODEL_NAME, num_labels)
+        peft_model = PeftModel.from_pretrained(base_model, english_pretrained_model_path)
+    else:
+        # Initialize tokenizer
+        print(f"\nLoading tokenizer: {MODEL_NAME}")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-    # Create datasets
-    print("Creating datasets...")
-    train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
+        # Create datasets
+        print("Creating datasets...")
+        train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
 
-    # Initialize model
-    print(f"Initializing multilabel model with {num_labels} emotion labels...")
-    model = MultiLabelEmotionModel(MODEL_NAME, num_labels)
+        # Initialize model
+        print(f"Initializing multilabel model with {num_labels} emotion labels...")
+        model = MultiLabelEmotionModel(MODEL_NAME, num_labels)
 
-    # LoRA configurations
-    lora_config = LoraConfig(
-        r=8,
-        lora_alpha=16,
-        target_modules=["query", "value"], # Changes depending on the model
-        lora_dropout=0.1,
-        bias="none",
-        task_type="SEQ_CLS"
-    )
+        # LoRA configurations
+        lora_config = LoraConfig(
+            r=8,
+            lora_alpha=16,
+            target_modules=["query", "value"], # Changes depending on the model
+            lora_dropout=0.1,
+            bias="none",
+            task_type="SEQ_CLS"
+        )
 
-    peft_model = get_peft_model(model, lora_config)
-    peft_model.print_trainable_parameters()
+        peft_model = get_peft_model(model, lora_config)
+        peft_model.print_trainable_parameters()
 
-    # Training arguments
-    training_args = TrainingArguments(
-        output_dir='./results',
-        num_train_epochs=NUM_EPOCHS,
-        per_device_train_batch_size=BATCH_SIZE,
-        per_device_eval_batch_size=BATCH_SIZE,
-        warmup_steps=100,
-        weight_decay=0.01,
-        logging_dir='./logs',
-        logging_steps=50,
-        eval_strategy="steps",
-        eval_steps=500,
-        save_strategy="steps",
-        save_steps=500,
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_f1_macro",
-        greater_is_better=True,
-        learning_rate=LEARNING_RATE,
-        fp16=torch.cuda.is_available(),
-        dataloader_num_workers=2,
-        dataloader_pin_memory=True,
-        remove_unused_columns=False,
-        report_to="none",
-    )
+        # Training arguments
+        training_args = TrainingArguments(
+            output_dir='./results',
+            num_train_epochs=NUM_EPOCHS,
+            per_device_train_batch_size=BATCH_SIZE,
+            per_device_eval_batch_size=BATCH_SIZE,
+            warmup_steps=100,
+            weight_decay=0.01,
+            logging_dir='./logs',
+            logging_steps=50,
+            eval_strategy="steps",
+            eval_steps=500,
+            save_strategy="steps",
+            save_steps=500,
+            load_best_model_at_end=True,
+            metric_for_best_model="eval_f1_macro",
+            greater_is_better=True,
+            learning_rate=LEARNING_RATE,
+            fp16=torch.cuda.is_available(),
+            dataloader_num_workers=2,
+            dataloader_pin_memory=True,
+            remove_unused_columns=False,
+            report_to="none",
+        )
 
-    # Initialize trainer
-    trainer = Trainer(
-        model=peft_model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=test_dataset,
-        compute_metrics=compute_multilabel_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
-    )
+        # Initialize trainer
+        trainer = Trainer(
+            model=peft_model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=test_dataset,
+            compute_metrics=compute_multilabel_metrics,
+            callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+        )
 
-    # Train the model
-    print("CUDA available:", torch.cuda.is_available())
-    print("Using device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
-    print("\nStarting training...")
-    trainer.train()
+        # Train the model
+        print("CUDA available:", torch.cuda.is_available())
+        print("Using device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
+        print("\nStarting training...")
+        trainer.train()
 
-    # Plot training history
-    print("\nPlotting training history...")
-    plot_training_history(trainer)
+        # Plot training history
+        print("\nPlotting training history...")
+        plot_training_history(trainer)
 
-    # Detailed evaluation
-    print("\nPerforming detailed evaluation...")
-    predictions, labels, probabilities = evaluate_model_detailed(peft_model, test_dataset, emotion_columns, tokenizer)
+        # Detailed evaluation
+        print("\nPerforming detailed evaluation...")
+        predictions, labels, probabilities = evaluate_model_detailed(peft_model, test_dataset, emotion_columns, tokenizer)
 
-    # Save the model
-    print("\nSaving model...")
-    peft_model.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
-    tokenizer.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
+        # Save the model
+        print("\nSaving model...")
+        peft_model.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
+        tokenizer.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
 
-    # Save emotion columns
-    import json
-    with open('./fine-tuned-multilabel-emotion-classifier/emotion_columns.json', 'w') as f:
-        json.dump(emotion_columns, f)
+        # Save emotion columns
+        import json
+        with open('./fine-tuned-multilabel-emotion-classifier/emotion_columns.json', 'w') as f:
+            json.dump(emotion_columns, f)
 
-    print("\nTraining completed! Model saved to './fine-tuned-multilabel-emotion-classifier'")
+        print("\nTraining completed! Model saved to './fine-tuned-multilabel-emotion-classifier'")
+
+    #------------------ 
 
     return peft_model, tokenizer, emotion_columns
 
@@ -467,6 +448,15 @@ if __name__ == '__main__':
 
   # Run the main training pipeline
   model, tokenizer, emotion_columns = main()
+
+  # load and preprocess hausa data
+  train_df, test_df, emotion_columns = load_and_preprocess_data("hau")
+  print(test_df.head(5))
+
+  # Test zero shot inference
+  zsp = ZeroShotPredictor()
+  train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
+  predictions, labels, probabilities = evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer)
 
   # Example predictions
   test_texts = [
