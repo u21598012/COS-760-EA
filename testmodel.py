@@ -294,7 +294,7 @@ def plot_emotion_distribution(train_df, test_df, emotion_columns):
     plt.tight_layout()
     plt.show()
 
-def main():
+def train_on_english():
     """Main training pipeline for multilabel emotion classification"""
     BATCH_SIZE = 4
     LEARNING_RATE = 2e-5
@@ -394,19 +394,81 @@ def main():
 
         # Save the model
         print("\nSaving model...")
-        peft_model.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
-        tokenizer.save_pretrained('./fine-tuned-multilabel-emotion-classifier')
+        peft_model.save_pretrained('./models/zero_shot')
+        tokenizer.save_pretrained('./models/zero_shot')
 
         # Save emotion columns
         import json
-        with open('./fine-tuned-multilabel-emotion-classifier/emotion_columns.json', 'w') as f:
+        with open('./models/zero_shot/emotion_columns.json', 'w') as f:
             json.dump(emotion_columns, f)
 
-        print("\nTraining completed! Model saved to './fine-tuned-multilabel-emotion-classifier'")
+        print("\nTraining completed! Model saved to './models/zero_shot'")
 
     #------------------ 
 
     return peft_model, tokenizer, emotion_columns
+
+def finetune_on_hausa(pretrained_model, tokenizer, emotion_columns):
+    """Phase 2: Fine-tune the English-trained model on Hausa data."""
+    BATCH_SIZE = 4
+    LEARNING_RATE = 2e-5
+    NUM_EPOCHS = 10
+    output_path = './models/fine_tuned_hausa'
+
+    print("\n=== PHASE 2: Fine-tuning on Hausa Data ===")
+
+    # Load Hausa data
+    train_df, test_df, _ = load_and_preprocess_data("hau")  # Assume label structure is the same
+    train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
+
+    # LoRA config (assumes pretrained_model is already a PEFT model)
+    training_args = TrainingArguments(
+        output_dir='./results_hausa',
+        num_train_epochs=NUM_EPOCHS,
+        per_device_train_batch_size=BATCH_SIZE,
+        per_device_eval_batch_size=BATCH_SIZE,
+        warmup_steps=100,
+        weight_decay=0.01,
+        logging_dir='./logs_hausa',
+        logging_steps=50,
+        eval_strategy="steps",
+        eval_steps=500,
+        save_strategy="steps",
+        save_steps=500,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_f1_macro",
+        greater_is_better=True,
+        learning_rate=LEARNING_RATE,
+        fp16=torch.cuda.is_available(),
+        dataloader_num_workers=2,
+        dataloader_pin_memory=True,
+        remove_unused_columns=False,
+        report_to="none",
+    )
+
+    trainer = Trainer(
+        model=pretrained_model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
+        compute_metrics=compute_multilabel_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+    )
+
+    print("\nStarting Hausa fine-tuning...")
+    trainer.train()
+
+    # Detailed evaluation
+    print("\nPerforming detailed evaluation...")
+    predictions, labels, probabilities = evaluate_model_detailed(pretrained_model, test_dataset, emotion_columns, tokenizer)
+
+    # Save Hausa fine-tuned model
+    pretrained_model.save_pretrained(output_path)
+    tokenizer.save_pretrained(output_path)
+
+    print("\nHausa fine-tuned model saved to:", output_path)
+    return pretrained_model
+
 
 def predict_emotions(text: str, model, tokenizer, emotion_columns, threshold=0.5, device='cpu'):
     """Predict emotions for a single text with probabilities"""
@@ -447,7 +509,8 @@ def predict_emotions(text: str, model, tokenizer, emotion_columns, threshold=0.5
 if __name__ == '__main__':
 
   # Run the main training pipeline
-  model, tokenizer, emotion_columns = main()
+  english_model, tokenizer, emotion_columns = train_on_english()
+  hausa_model = finetune_on_hausa(english_model, tokenizer, emotion_columns)
 
   # load and preprocess hausa data
   train_df, test_df, emotion_columns = load_and_preprocess_data("hau")
@@ -456,7 +519,7 @@ if __name__ == '__main__':
   # Test zero shot inference
   zsp = ZeroShotPredictor()
   train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
-  predictions, labels, probabilities = evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer)
+  predictions, labels, probabilities = evaluate_model_detailed(english_model, test_dataset, emotion_columns, tokenizer)
 
   # Example predictions
   test_texts = [
