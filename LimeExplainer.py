@@ -55,7 +55,7 @@ class LimeMultiLabelEmotionExplainer:
         return np.array(predictions)
 
     def explain_instance(self, text: str, top_labels: int = None, num_features: int = 10,
-                        num_samples: int = 1000) -> Dict:
+                        num_samples: int = 400) -> Dict:
         """
         Args:
             text: Text to explain
