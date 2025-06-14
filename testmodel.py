@@ -32,7 +32,6 @@ from transformers import (
     AutoModelForSequenceClassification
 )
 import matplotlib.pyplot as plt
-from ZeroShotClassification import ZeroShotPredictor
 # import seaborn as sns
 import warnings
 warnings.filterwarnings('ignore')
@@ -276,7 +275,7 @@ def plot_emotion_distribution(train_df, test_df, emotion_columns):
     """Plot emotion distribution across train and test sets"""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
-    # Training set
+    # Plot training set
     train_counts = [train_df[col].sum() for col in emotion_columns]
     train_percentages = [count/len(train_df)*100 for count in train_counts]
 
@@ -285,7 +284,7 @@ def plot_emotion_distribution(train_df, test_df, emotion_columns):
     ax1.set_ylabel('Percentage of samples')
     ax1.tick_params(axis='x', rotation=45)
 
-    # Test set
+    # Plot test set
     test_counts = [test_df[col].sum() for col in emotion_columns]
     test_percentages = [count/len(test_df)*100 for count in test_counts]
 
@@ -333,7 +332,7 @@ def train_on_english():
         print(f"Initializing multilabel model with {num_labels} emotion labels...")
         model = MultiLabelEmotionModel(MODEL_NAME, num_labels)
 
-        # LoRA configurations
+        # Integrate LoRA peft
         lora_config = LoraConfig(
             r=8,
             lora_alpha=16,
@@ -405,9 +404,7 @@ def train_on_english():
         with open('./models/zero_shot/emotion_columns.json', 'w') as f:
             json.dump(emotion_columns, f)
 
-        print("\nTraining completed! Model saved to './models/zero_shot'")
-
-    #------------------ 
+        print("\nTraining completed! Model saved to './models/zero_shot'") 
 
     return peft_model, tokenizer, emotion_columns
 
@@ -529,15 +526,12 @@ if __name__ == '__main__':
   train_df, test_df, emotion_columns = load_and_preprocess_data("hau")
   print(test_df.head(5))
 
-  # Initialize explainer
+  # Explain single instance
   explainer = LimeMultiLabelEmotionExplainer(english_model, tokenizer, emotion_columns)
 
-  # Explain single instance
   text = "It is ultra-slim and lightweight with great functionality."
   explanation = explainer.explain_instance(text, top_labels=6)
   print(explanation)
-
-  # Visualize
   explainer.visualize_explanation(explanation)
 
   # Test zero shot inference
