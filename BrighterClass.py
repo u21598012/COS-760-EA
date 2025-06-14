@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import List
 
 class BrighterMultiLabelDataset(Dataset):
     """Custom dataset for BRIGHTER multilabel emotion data"""
