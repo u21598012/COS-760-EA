@@ -9,7 +9,7 @@ function Emotion() {
     const [expl, setExpl] = useState(null);
     const [words1, setWords1] = useState(null);
     const [words2, setWords2] = useState(null);
-    const colours = []
+    const colours = ["#FF9078" , "#EBFF78" , "#99FF78" , "#78FFE2" , "#78B5FF" , "#BE78FF" ]
     const handleSubmit = async () => {
         try {
             const res = await axios.get("http://localhost:8000/");
@@ -51,14 +51,19 @@ function Emotion() {
         }
     }
 
-    function getImportantWords(data, predictionWord, threshold) {
+    function getImportantWords(data, predictionWord, explanationThreshold, predictionThreshold) {
+        const predictionScore = data.predictions[predictionWord];
+        if (predictionScore === undefined || predictionScore < predictionThreshold) {
+            return [];
+        }
+
         const explanationPairs = data.explanations[predictionWord];
         if (!explanationPairs) {
             return [];
         }
 
         return explanationPairs
-            .filter(([word, score]) => Math.abs(score) >= threshold)
+            .filter(([word, score]) => Math.abs(score) >= explanationThreshold)
             .map(([word]) => word);
     }
 
@@ -85,7 +90,7 @@ function Emotion() {
                         <tr>
                             <th>Emotion</th>
                             <th>Value</th>
-                            <th>Words</th>
+                            <th>Key Words</th>
                         </tr>
                         {Object.entries(result.predictions).map(([emotion, val], idx) => (
                             <tr key={idx}>
@@ -94,10 +99,10 @@ function Emotion() {
                                 <td>
                                     <Highlighter
                                         highlightClassName="highlight"
-                                        searchWords={getImportantWords(result, emotion, 0.1)}
+                                        searchWords={getImportantWords(result, emotion, 0.1 , 0.3)}
                                         autoEscape={true}
                                         textToHighlight={result.text}
-                                        highlightStyle={{ backgroundColor: "#12f54f" }}
+                                        highlightStyle={{ backgroundColor: colours[idx] }}
                                     />
                                 </td>
                             </tr>
