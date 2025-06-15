@@ -301,6 +301,62 @@ async def root():
     }
 }
 
+
+@app.post("/a")
+async def root():
+   return {
+    "text": "Such an example text must be analyzed immediately!",
+    "predictions": {
+        "anger": 0.905183861404657364,
+        "disgust": 0.90014993679942563176,
+        "fear": 0.917420588433742523,
+        "joy": 0.96161146759986877,
+        "sadness": 0.9004311972297728062,
+        "surprise": 0.9096109867095947
+    },
+    "explanations": {
+        "surprise": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] ,
+
+        "anger": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] ,
+
+        "disgust": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] ,
+        "fear": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] ,
+        "joy": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] ,
+        "sadness": [
+            [
+                "immediately",
+                0.1645227275223517
+            ],
+        ] 
+
+        
+    }
+   }
 # @app.post("/")
 # async def analyseText(data: Item):
 #    return await run_in_threadpool(classifyText, data.text, data.model_type)

@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 
 import Highlighter from "react-highlight-words";
+import "./Emotion.css"
 
 function Emotion() {
     const [input, setInput] = useState("");
@@ -10,46 +11,30 @@ function Emotion() {
     const [words1, setWords1] = useState(null);
     const [words2, setWords2] = useState(null);
     const colours = ["#FF9078" , "#EBFF78" , "#99FF78" , "#78FFE2" , "#78B5FF" , "#BE78FF" ]
-    const handleSubmit = async () => {
+
+    const handleSubmit = async (modelType) => {
         try {
-            const res = await axios.get("http://localhost:8000/");
+            const res = await axios.post("http://localhost:8000/a", { text: input, model_type: modelType });
             setResult(res.data);
-            // setInput(res.data.text)
-            const topEmotion = Object.entries(res.data.predictions)
-                .sort((a, b) => b[1] - a[1])[0][0];
-            
-            const threshold = 0.1;
-            const filtered = {};
-            for (const [emotion, wordPairs] of Object.entries(res.data.explanations)) {
-                if(emotion===topEmotion)
-                    filtered[emotion] = wordPairs.filter(([word, score]) => (score >= threshold));
-            }
-
-            const topEmotion2 = Object.entries(res.data.predictions)
-                .sort((a, b) => b[1] - a[1])[1][0];
-            console.log(topEmotion2)
-            const filtered2 = {};
-
-            for (const [emotion, wordPairs] of Object.entries(res.data.explanations)) {
-                if(emotion===topEmotion2)
-                    filtered2[emotion] = wordPairs.filter(([word, score]) => (score >= threshold));
-            }
-            const mergedFiltered = { ...filtered, ...filtered2 };
-
-            const words1 = Object.values(filtered).flat().map(([word]) => word);
-            const words2 = Object.values(filtered2).flat().map(([word]) => word);
-            setWords1(words1);
-            setWords2(words2);
-
-            console.log(words1);
-            console.log(mergedFiltered);
-            setExpl(filtered);
         }
         catch(err) {
             console.error(err);
             alert("api fail");
         }
     }
+
+    // const handleSubmit2 = async () => {
+    //     try {
+    //         const res = await axios.get("http://localhost:8000/a");
+    //         setResult(res.data);
+    //         // setInput(res.data.text)
+      
+    //     }
+    //     catch(err) {
+    //         console.error(err);
+    //         alert("api fail");
+    //     }
+    // }
 
     function getImportantWords(data, predictionWord, explanationThreshold, predictionThreshold) {
         const predictionScore = data.predictions[predictionWord];
@@ -77,23 +62,35 @@ function Emotion() {
                 placeholder="Enter text here"
                 className="textarea"
             />
-            <button onClick={handleSubmit} className="buttonsubmit">
-                Analyze
-            </button>
 
+            <div className="models">
+                <button onClick={() => handleSubmit("1")} className="buttonsubmit">
+                    Analyze 1
+                </button>
+
+                <button onClick={() => handleSubmit("2")} className="buttonsubmit">
+                    Analyze 2
+                </button>
+
+                <button onClick={() => handleSubmit("3")} className="buttonsubmit">
+                    Analyze 3
+                </button>
+
+                <button onClick={() => handleSubmit("4")} className="buttonsubmit">
+                    Analyze 4
+                </button>
+            </div>
             {result && (
-                
                 <div className="result-div"> 
-
                     <h3>Predicted Emotions</h3>
                     <table className="table">
-                        <tr>
+                        <tr className="tableTop">
                             <th>Emotion</th>
                             <th>Value</th>
                             <th>Key Words</th>
                         </tr>
                         {Object.entries(result.predictions).map(([emotion, val], idx) => (
-                            <tr key={idx}>
+                            <tr key={idx} className="tableBottom">
                                 <td>{emotion}</td>
                                 <td>{val}</td>
                                 <td>
