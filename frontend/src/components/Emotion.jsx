@@ -44,7 +44,7 @@ function Emotion() {
             const res = await axios.post("http://localhost:8000/", { text: input, 
                 model_type: modelType , lime_iterations:1000 , decision_boundary : 0.5});
             setResult(res.data);
-            // console.log(res.data);
+            console.log(res.data);
             setModelNo(modelType);
             setLoading(false);
         }
@@ -124,6 +124,8 @@ function Emotion() {
                         <tr className="tableTop">
                             <th>Emotion</th>
                             <th>Value</th>
+                            <th>Emotion Detected</th>
+
                             <th>Key Words</th>
                             <th>Graph</th>
                         </tr>
@@ -131,6 +133,8 @@ function Emotion() {
                             <tr key={idx} className="tableBottom">
                                 <td>{emotion}</td>
                                 <td>{val}</td>
+                                <td>{String(result.predictions[emotion])}</td>
+
                                 <td>
                                     <Highlighter
                                         highlightClassName="highlight"
@@ -140,6 +144,8 @@ function Emotion() {
                                         highlightStyle={{ backgroundColor: colours[idx] }}
                                     />
                                 </td>
+                                
+
                                 
                                 <td>
                                     {
