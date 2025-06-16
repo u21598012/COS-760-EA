@@ -3,11 +3,12 @@ import axios from "axios";
 
 import Highlighter from "react-highlight-words";
 import "./Emotion.css"
-
+import { useEffect } from "react";
 //  add spinning loader 
 
 
 import {
+
   BarChart,
   Bar,
   XAxis,
@@ -40,15 +41,11 @@ function Emotion() {
     const [words2, setWords2] = useState(null);
     const colours = ["#FF9078" , "#EBFF78" , "#99FF78" , "#78FFE2" , "#78B5FF" , "#BE78FF" ]
 
-    const colours_text = Array.from({ length: 500 }, () =>
-        `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
-        );
+    const storedColours = localStorage.getItem("colours_text");
+    const parsedColours = JSON.parse(storedColours);
 
     // console.log(colours_text)
-
-    
           
-
 
     const handleSubmit = async (modelType) => {
         try {
@@ -164,14 +161,7 @@ function Emotion() {
                         width={500}
                         height={200}
                         data={data}
-                        // margin={{
-                        //     top: 5,
-                        //     right: 30,
-                        //     left: 20,
-                        //     bottom: 5
-                        // }}
-                            margin={{ top: 20, right: 1, left: 1, bottom: 5 }}
-
+                        margin={{ top: 20, right: 1, left: 1, bottom: 5 }}
                         >
 
                         <CartesianGrid strokeDasharray="3 3" />
@@ -182,7 +172,7 @@ function Emotion() {
                         <ReferenceLine y={0} stroke="#000" />
             
                             {sortedVal.map(([word], i) => (
-                        <Bar key={i} dataKey={word} fill={colours_text[i % colours_text.length]} />                         
+                        <Bar key={i} dataKey={word} fill={parsedColours[i % parsedColours.length]} />                         
                         ))}
 
                     </BarChart>
