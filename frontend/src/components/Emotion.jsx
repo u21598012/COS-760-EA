@@ -146,7 +146,9 @@ function Emotion() {
                                     {
                 Object.entries(result.explanations).map(([emotion2, val], id) => {
                     const dataPoint = { name: emotion2 };
-                        val.forEach(([word, weight]) => {
+                      const sortedVal = [...val].sort((a, b) => b[1] - a[1]);
+
+                        sortedVal.forEach(([word, weight]) => {
                         dataPoint[word] = weight;
                         });
 
@@ -179,7 +181,7 @@ function Emotion() {
                         <Legend />
                         <ReferenceLine y={0} stroke="#000" />
             
-                            {val.map(([word], i) => (
+                            {sortedVal.map(([word], i) => (
                         <Bar key={i} dataKey={word} fill={colours_text[i % colours_text.length]} />                         
                         ))}
 
