@@ -7,6 +7,12 @@ import { useEffect } from "react";
 //  add spinning loader 
 
 
+/*
+]
+
+
+*/
+
 import {
 
   BarChart,
@@ -101,19 +107,19 @@ function Emotion() {
 
             <div className="models">
                 <button onClick={() => handleSubmit("1")} className="buttonsubmit">
-                    Analyze 1
+                    Fine-tuned mBERT  
                 </button>
 
                 <button onClick={() => handleSubmit("2")} className="buttonsubmit">
-                    Analyze 2
+                    Zero-Shot XLM  
                 </button>
 
                 <button onClick={() => handleSubmit("3")} className="buttonsubmit">
-                    Analyze 3
+                    Fine-tuned XLM  
                 </button>
 
                 <button onClick={() => handleSubmit("4")} className="buttonsubmit">
-                    Analyze 4
+                    Zero-Shot BERT  
                 </button>
             </div>
             {loading && <div className="spinner">Loading...</div>}
@@ -206,8 +212,3 @@ function Emotion() {
             </div>
         )}
         </div>
-        
-    );
-}
-
-export default Emotion;
