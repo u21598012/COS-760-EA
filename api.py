@@ -46,6 +46,7 @@ def classifyText(text: str, model_type: ModelType, num_samples: int, threshold: 
     if explainer is None:
         raise HTTPException(status_code=500, detail=f"Model '{model_type}' not loaded")
 
+    print("thing")
     return explainer.explain_instance(text, top_labels=6, num_samples=num_samples, decision_boundary=threshold)
 
 @app.on_event("startup")
