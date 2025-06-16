@@ -9,7 +9,7 @@ body {
 
 /* Container */
 .outer {
-  max-width: 800px;
+  max-width: 1800px;
   margin: auto;
   background: white;
   border-radius: 16px;
@@ -91,10 +91,17 @@ body {
   text-align: left;
 }
 
-.table th,
+
 .table td {
   padding: 12px 15px;
   border-bottom: 1px solid #ddd;
+}
+
+.table th{
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+  align-self: center;
+  text-align: center;
 }
 
 .tableBottom:hover {

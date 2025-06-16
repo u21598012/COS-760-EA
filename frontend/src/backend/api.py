@@ -81,7 +81,7 @@ models = {}
 #             }
 #         }
 
-@app.get("/")
+@app.post("/")
 async def root():
    return {
     "text": "Such an example text must be analyzed immediately!",
