@@ -67,7 +67,6 @@ def load_models():
             base_model = MultiLabelEmotionModel(MODEL_NAME, len(emotion_columns))
             model = PeftModel.from_pretrained(base_model, path)
         else:
-            print("hit")
             model = AutoModelForSequenceClassification.from_pretrained(path)
 
 
