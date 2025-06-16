@@ -72,9 +72,9 @@ function Emotion() {
     //     }
     // }
 
-    function getImportantWords(data, predictionWord, explanationThreshold, predictionThreshold) {
+    function getImportantWords(data, predictionWord, explanationThreshold, predictionBoolean) {
         const predictionScore = data.probabilities[predictionWord];
-        if (predictionScore === undefined || predictionScore < predictionThreshold) {
+        if (predictionScore === undefined || !predictionBoolean) {
             return [];
         }
 
@@ -138,7 +138,7 @@ function Emotion() {
                                 <td>
                                     <Highlighter
                                         highlightClassName="highlight"
-                                        searchWords={getImportantWords(result, emotion, 0.001 , 0.3)}
+                                        searchWords={getImportantWords(result, emotion, 0.001 , result.predictions[emotion])}
                                         autoEscape={true}
                                         textToHighlight={result.text}
                                         highlightStyle={{ backgroundColor: colours[idx] }}
