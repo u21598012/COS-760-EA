@@ -1,6 +1,6 @@
 /* Apply to entire page */
 body {
-  font-family: 'Courier New', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'monaco', 'Courier New',  Tahoma, Geneva, Verdana, sans-serif;
   background: #f4f7fa;
   color: #333;
   margin: 0;

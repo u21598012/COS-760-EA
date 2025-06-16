@@ -40,7 +40,7 @@ function Emotion() {
     const [words2, setWords2] = useState(null);
     const colours = ["#FF9078" , "#EBFF78" , "#99FF78" , "#78FFE2" , "#78B5FF" , "#BE78FF" ]
 
-    const colours_text = Array.from({ length: 50 }, () =>
+    const colours_text = Array.from({ length: 500 }, () =>
         `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
         );
 
@@ -153,7 +153,7 @@ function Emotion() {
                         const data = [dataPoint];
 
                         
-                            // console.log(data)
+                            console.log(data)
                     return(
                         <>
                         {emotion2===emotion && (
