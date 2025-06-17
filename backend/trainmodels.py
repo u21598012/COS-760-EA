@@ -264,7 +264,7 @@ def evaluate_model_detailed(model, test_dataset, emotion_columns, tokenizer):
     for i, emotion in enumerate(emotion_columns):
         print(f"\n{emotion.upper()}:")
 
-        # Explicitly specify labels=[0, 1] to handle cases with only one class present
+        # Explicitly specify labels=[0, 1] to handle cases with only one class present for all data instances
         # Also add zero_division handling to classification_report
         print(classification_report(all_labels[:, i], all_predictions[:, i],
                                   target_names=['Not Present', 'Present'], digits=3, labels=[0, 1], zero_division=0))
@@ -537,29 +537,3 @@ if __name__ == '__main__':
   # Test zero shot inference
   train_dataset, test_dataset = create_data_loaders(train_df, test_df, emotion_columns, tokenizer, MAX_LENGTH)
   predictions, labels, probabilities = evaluate_model_detailed(english_model, test_dataset, emotion_columns, tokenizer)
-
-  # Example predictions
-  test_texts = [
-      "I am so happy and excited about this wonderful news!",
-      "This makes me really angry and disgusted.",
-      "This is absolutely baffling.",
-      "What a joyful and surprising moment!",
-      "I'm feeling quite sad and afraid lately.",
-      "I can't believe this happened, I'm shocked and happy at the same time!"
-  ]
-
-  print("\n=== Example Multilabel Predictions ===")
-  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-  for text in test_texts:
-      print(f"\nText: '{text}'")
-      results = predict_emotions(text, english_model, tokenizer, emotion_columns, threshold=0.3, device=device)
-
-      print("Predicted emotions:")
-      for result in results:
-          status = "✓" if result['predicted'] else " "
-          print(f"  {status} {result['emotion']:>8}: {result['probability']:.3f}")
-
-      predicted_emotions = [r['emotion'] for r in results if r['predicted']]
-      print(f"Final prediction: {predicted_emotions if predicted_emotions else 'No emotions detected'}")
-      print("-" * 60)
