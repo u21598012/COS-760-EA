@@ -4,6 +4,7 @@ import uvicorn
 import os
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
+
 from lime.lime_text import LimeTextExplainer
 from transformers import (
     AutoModelForSequenceClassification,
@@ -18,6 +19,7 @@ from LimeExplainer import LimeMultiLabelEmotionExplainer
 english_pretrained_model_path_xlm = 'KhweziSandi/XLM-R-Zero-Shot-Hausa'
 hausa_finetuned_model_path_xlm = 'KhweziSandi/XLM-R-Fine-Tuned-Hausa'
 hausa_finetuned_model_path_bert = 'rdhinaz/BERT-Fine-Tuned-Hausa'
+english_pretrained_model_path_bert = 'Yudi-g/BERT-Hausa'
 emotion_columns = ['anger', 'disgust', 'fear', 'joy', 'sadness', 'surprise']
 MODEL_NAME = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
 # MAX_LENGTH = 128
@@ -39,12 +41,14 @@ class ModelType(IntEnum):
    BERT_FT = 1  # BERT Fine-tuned model classification
    XLM_ZS = 2 # XLM-R Zero shot classification
    XLM_FT = 3 # XLM-R Fine-tuned model classification
+   BERT_EN = 4 
 
 def classifyText(text: str, model_type: ModelType, num_samples: int, threshold: float):
     explainer = models.get(model_type)
     if explainer is None:
         raise HTTPException(status_code=500, detail=f"Model '{model_type}' not loaded")
 
+    print("thing")
     return explainer.explain_instance(text, top_labels=6, num_samples=num_samples, decision_boundary=threshold)
 
 @app.on_event("startup")
@@ -56,6 +60,8 @@ def load_models():
         ModelType.BERT_FT: hausa_finetuned_model_path_bert,
         ModelType.XLM_ZS: english_pretrained_model_path_xlm,
         ModelType.XLM_FT: hausa_finetuned_model_path_xlm,
+        ModelType.BERT_EN: english_pretrained_model_path_bert,
+
     }
 
     for model_type, path in model_configs.items():
