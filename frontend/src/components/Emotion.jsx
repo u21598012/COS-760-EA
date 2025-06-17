@@ -212,3 +212,8 @@ function Emotion() {
             </div>
         )}
         </div>
+        
+    );
+}
+
+export default Emotion;
