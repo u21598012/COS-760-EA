@@ -41,8 +41,8 @@ from BrighterClass import BrighterMultiLabelDataset
 from MultiLabelClassifier import MultiLabelEmotionModel
 
 # constants
-english_pretrained_model_path = './models/zero_shot'
-hausa_finetuned_model_path = './models/fine_tuned_hausa'
+english_pretrained_model_path = './models/zero_shot_afroxlm'
+hausa_finetuned_model_path = './models/fine_tuned_hausa_afroxlm'
 emotion_columns = ['anger', 'disgust', 'fear', 'joy', 'sadness', 'surprise']
 MODEL_NAME = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
 MAX_LENGTH = 128
