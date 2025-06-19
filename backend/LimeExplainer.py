@@ -54,8 +54,8 @@ class LimeMultiLabelEmotionExplainer:
 
         return np.array(predictions)
 
-    def explain_instance(self, text: str, top_labels: int = None, num_features: int = 10,
-                        num_samples: int = 1000) -> Dict:
+    def explain_instance(self, text: str, decision_boundary: float = 0.5, top_labels: int = None, num_features: int = 10,
+                        num_samples: int = 400) -> Dict:
         """
         Args:
             text: Text to explain
@@ -68,6 +68,7 @@ class LimeMultiLabelEmotionExplainer:
         """
         # Get prediction for the original text
         original_pred = self.predict_proba([text])[0]
+        predicted_labels = (original_pred >= decision_boundary).astype(int)
 
         # Determine which emotions to explain
         if top_labels is None:
@@ -89,7 +90,8 @@ class LimeMultiLabelEmotionExplainer:
 
         results = {
             'text': text,
-            'predictions': {emotion: float(prob) for emotion, prob in zip(self.emotion_columns, original_pred)},
+            'probabilities': {emotion: float(prob) for emotion, prob in zip(self.emotion_columns, original_pred)},
+            'predictions': {emotion: bool(pred) for emotion, pred in zip(self.emotion_columns, predicted_labels)},
             'explanations': {}
         }
 

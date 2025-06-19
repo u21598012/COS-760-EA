@@ -1,0 +1,117 @@
+/* Apply to entire page */
+body {
+  font-family: 'monaco', 'Courier New',  Tahoma, Geneva, Verdana, sans-serif;
+  background: #f4f7fa;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Container */
+.outer {
+  max-width: 1800px;
+  margin: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  padding-right: 30px;
+}
+
+/* Title */
+.title {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.models{
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Textarea */
+.textarea {
+  width: 97%;
+  min-height: 120px;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #ccd6dd;
+  font-size: 16px;
+  resize: vertical;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+/* Button */
+.buttonsubmit {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.3s ease;
+  display: block;
+  margin: 0 auto 30px auto;
+}
+
+.buttonsubmit:hover {
+  background: #357ab8;
+}
+
+/* Result section */
+.result-div {
+  background: #f9fafc;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.result-div h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #34495e;
+}
+
+/* Table styling */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.tableTop {
+  background-color: #ecf0f1;
+  text-align: left;
+}
+
+
+.table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.table th{
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+  align-self: center;
+  text-align: center;
+}
+
+.tableBottom:hover {
+  background-color: #f0f8ff;
+}
+
+/* Highlighted words */
+.highlight {
+  background-color: #ffeaa7;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
