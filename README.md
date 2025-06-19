@@ -13,7 +13,7 @@
 1. Navigate to the root of the project
 2. Issue the command `python -m venv venv` to create the virtual environment named "venv", then activate the environment using the appropriate platform dependent script. E.g. For Powershell the command would be `venv/scripts/activate`
 3. Load the required python dependencies (for the backend) using `pip install -r backend/requirements.txt`
-4. After the required packages are installed, run the backend using `python api.py`. The required models will be loaded from Huggingface and a server instance will be instantiated (on ` http://127.0.0.1:8000`).
+4. After the required packages are installed, run the backend using `python backend/api.py`. The required models will be loaded from Huggingface and a server instance will be instantiated (on ` http://127.0.0.1:8000`).
 
 ## Running the Frontend 
 
